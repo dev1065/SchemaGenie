@@ -1,6 +1,7 @@
 import os
 
 from dotenv import load_dotenv
+from models import Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -17,6 +18,6 @@ SessionLocal = sessionmaker(
     autocommit=False
 )
 
-
+Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
     print("Successfull")
