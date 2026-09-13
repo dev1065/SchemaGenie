@@ -23,3 +23,14 @@ class ProjectResponse(BaseModel):
 class ProjectUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
+
+
+class ConversationResponse(BaseModel):
+    id: int
+    project_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }

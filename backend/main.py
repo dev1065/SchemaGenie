@@ -1,7 +1,7 @@
 from database import get_db
 from fastapi import Depends, FastAPI, HTTPException
-from models import Project
-from schemas import ProjectCreate, ProjectResponse, ProjectUpdate
+from models import Conversation, Project
+from schemas import ConversationResponse, ProjectCreate, ProjectResponse, ProjectUpdate
 from sqlalchemy.orm import Session
 
 app = FastAPI()
@@ -82,3 +82,21 @@ def delete_project(
     db.commit()
 
     return {"message": "project deleted successfully"}
+
+
+@app.post("/projects/{project_id}/conversations", response_model=ConversationResponse)
+def create_conversation(
+    project_id: int,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    conversation = Conversation(
+        project_id=project_id
+    )
+    db.add(conversation)
+    db.commit()
+    db.refresh(conversation)
+    
+    return conversation

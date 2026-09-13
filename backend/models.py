@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -22,6 +22,9 @@ class Project(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
+    conversations: Mapped[list["Conversation"]] = relationship(
+        back_populates="project"
+    )
 
 
 class Conversation(Base):
@@ -39,6 +42,12 @@ class Conversation(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
+    project: Mapped["Project"] = relationship(
+        back_populates="conversations"
+    )
+    messages: Mapped[list["Message"]] = relationship(
+        back_populates="conversation"
+    )
 
 
 class Message(Base):
@@ -51,4 +60,7 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc)
+    )
+    conversation: Mapped["Conversation"] = relationship(
+        back_populates="messages"
     )
