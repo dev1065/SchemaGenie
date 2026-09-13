@@ -98,5 +98,33 @@ def create_conversation(
     db.add(conversation)
     db.commit()
     db.refresh(conversation)
-    
+
+    return conversation
+
+
+@app.get("/projects/{project_id}/conversations", response_model=list[ConversationResponse])
+def get_conversations(
+    project_id: int,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    conversations = (
+        db.query(Conversation).filter(
+            Conversation.project_id == project_id).all()
+    )
+    return conversations
+
+
+@app.get("/conversations/{conversation_id}",
+         response_model=ConversationResponse)
+def get_conversation(
+    conversation_id: int,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    conversation = db.query(Conversation).filter(
+        Conversation.id == conversation_id).first()
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
