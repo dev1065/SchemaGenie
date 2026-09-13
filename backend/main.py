@@ -1,7 +1,14 @@
 from database import get_db
 from fastapi import Depends, FastAPI, HTTPException
-from models import Conversation, Project
-from schemas import ConversationResponse, ProjectCreate, ProjectResponse, ProjectUpdate
+from models import Conversation, Message, Project
+from schemas import (
+    ConversationResponse,
+    MessageCreate,
+    MessageResponse,
+    ProjectCreate,
+    ProjectResponse,
+    ProjectUpdate,
+)
 from sqlalchemy.orm import Session
 
 app = FastAPI()
@@ -128,3 +135,52 @@ def get_conversation(
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
+
+
+@app.post(
+    "/conversations/{conversation_id}/messages",
+    response_model=MessageResponse
+)
+def create_message(
+    conversation_id: int,
+    message_data: MessageCreate,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    conversation = (
+        db.query(Conversation).filter(
+            Conversation.id == conversation_id).first()
+    )
+
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    message = Message(
+        conversation_id=conversation_id,
+        role=message_data.role,
+        content=message_data.content
+    )
+
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    return message
+
+
+@app.get("/conversations/{conversation_id}/messages", response_model=list[MessageResponse])
+def get_messages(
+    conversation_id: int,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    conversation = db.query(Conversation).filter(
+        Conversation.id == conversation_id).first()
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    messages = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at).all()
+    )
+
+    return messages
