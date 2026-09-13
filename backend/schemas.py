@@ -37,7 +37,6 @@ class ConversationResponse(BaseModel):
 
 
 class MessageCreate(BaseModel):
-    role: str
     content: str
 
 

@@ -1,3 +1,4 @@
+from ai.ollama_client import generate_response
 from database import get_db
 from fastapi import Depends, FastAPI, HTTPException
 from models import Conversation, Message, Project
@@ -154,17 +155,27 @@ def create_message(
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    message = Message(
+    user_message = Message(
         conversation_id=conversation_id,
-        role=message_data.role,
+        role="user",
         content=message_data.content
     )
 
-    db.add(message)
+    db.add(user_message)
     db.commit()
-    db.refresh(message)
+    db.refresh(user_message)
 
-    return message
+    ai_response = generate_response(message_data.content)
+    ai_message = Message(
+        conversation_id=conversation_id,
+        role="assistant",
+        content=ai_response
+    )
+    db.add(ai_message)
+    db.commit()
+    db.refresh(ai_message)
+
+    return ai_message
 
 
 @app.get("/conversations/{conversation_id}/messages", response_model=list[MessageResponse])
