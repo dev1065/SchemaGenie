@@ -18,3 +18,8 @@ class ProjectResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class ProjectUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
