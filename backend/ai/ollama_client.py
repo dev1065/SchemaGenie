@@ -3,14 +3,9 @@ import ollama
 MODEL_NAME = "qwen3.5:0.8b"
 
 
-def generate_response(prompt: str) -> str:
+def generate_response(messages: list[dict[str, str]]) -> str:
     response = ollama.chat(
         model=MODEL_NAME,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+        messages=messages
     )
     return response["message"]["content"]

@@ -164,8 +164,20 @@ def create_message(
     db.add(user_message)
     db.commit()
     db.refresh(user_message)
-
-    ai_response = generate_response(message_data.content)
+    messages = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at)
+        .all()
+    )
+    conversation_messasges = [
+        {
+            "role": message.role,
+            "content": message.content
+        }
+        for message in messages
+    ]
+    ai_response = generate_response(conversation_messasges)
     ai_message = Message(
         conversation_id=conversation_id,
         role="assistant",
