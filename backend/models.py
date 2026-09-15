@@ -48,6 +48,9 @@ class Conversation(Base):
     messages: Mapped[list["Message"]] = relationship(
         back_populates="conversation"
     )
+    requirements: Mapped[list["Requirement"]] = relationship(
+        back_populates="conversation"
+    )
 
 
 class Message(Base):
@@ -63,4 +66,29 @@ class Message(Base):
     )
     conversation: Mapped["Conversation"] = relationship(
         back_populates="messages"
+    )
+
+
+class Requirement(Base):
+    __tablename__ = "requirements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(
+        ForeignKey("conversations.id")
+    )
+    key: Mapped[str] = mapped_column(String(100))
+    value: Mapped[str] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+    conversation: Mapped["Conversation"] = relationship(
+        back_populates="requirements"
     )
