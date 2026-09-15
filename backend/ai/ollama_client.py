@@ -48,5 +48,8 @@ def generate_response(messages: list[dict[str, str]]) -> str:
         model=MODEL_NAME,
         messages=messages_with_system_prompt
     )
+    content = response["message"]["content"].strip()
+    if not content:
+        raise RuntimeError("LLM returned an empty response")
 
     return response["message"]["content"]

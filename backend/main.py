@@ -1,4 +1,3 @@
-from ai.ollama_client import generate_response
 from database import get_db
 from fastapi import Depends, FastAPI, HTTPException
 from models import Conversation, Message, Project
@@ -10,6 +9,7 @@ from schemas import (
     ProjectResponse,
     ProjectUpdate,
 )
+from services.conversation_service import generate_conversation_response
 from sqlalchemy.orm import Session
 
 app = FastAPI()
@@ -147,47 +147,17 @@ def create_message(
     message_data: MessageCreate,
     db: Session = Depends(get_db)  # noqa: B008
 ):
-    conversation = (
-        db.query(Conversation).filter(
-            Conversation.id == conversation_id).first()
-    )
-
-    if conversation is None:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-
-    user_message = Message(
-        conversation_id=conversation_id,
-        role="user",
-        content=message_data.content
-    )
-
-    db.add(user_message)
-    db.commit()
-    db.refresh(user_message)
-    messages = (
-        db.query(Message)
-        .filter(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at)
-        .all()
-    )
-    conversation_messasges = [
-        {
-            "role": message.role,
-            "content": message.content
-        }
-        for message in messages
-    ]
-    ai_response = generate_response(conversation_messasges)
-    ai_message = Message(
-        conversation_id=conversation_id,
-        role="assistant",
-        content=ai_response
-    )
-    db.add(ai_message)
-    db.commit()
-    db.refresh(ai_message)
-
-    return ai_message
+    try:
+        return generate_conversation_response(
+            conversation_id=conversation_id,
+            user_content=message_data.content,
+            db=db
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
 
 
 @app.get("/conversations/{conversation_id}/messages", response_model=list[MessageResponse])
