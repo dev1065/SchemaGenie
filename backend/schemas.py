@@ -50,3 +50,25 @@ class MessageResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class RequirementCreate(BaseModel):
+    key: str
+    value: str
+
+
+class RequirementUpdate(BaseModel):
+    value: str
+
+
+class RequirementResponse(BaseModel):
+    id: int
+    conversation_id: int
+    key: str
+    value: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }

@@ -8,8 +8,17 @@ from schemas import (
     ProjectCreate,
     ProjectResponse,
     ProjectUpdate,
+    RequirementCreate,
+    RequirementResponse,
+    RequirementUpdate,
 )
 from services.conversation_service import generate_conversation_response
+from services.requirement_service import (
+    create_requirement,
+    delete_requirement,
+    get_requirements,
+    update_requirement,
+)
 from sqlalchemy.orm import Session
 
 app = FastAPI()
@@ -177,3 +186,85 @@ def get_messages(
     )
 
     return messages
+
+
+@app.post(
+    "/conversations/{conversation_id}/requirements",
+    response_model=RequirementResponse
+)
+def create_requirement_endpoint(
+    conversation_id: int,
+    requirement_data: RequirementCreate,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    try:
+        return create_requirement(
+            conversation_id=conversation_id,
+            key=requirement_data.key,
+            value=requirement_data.value,
+            db=db
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+
+
+@app.get(
+    "/conversations/{conversation_id}/requirements",
+    response_model=list[RequirementResponse]
+)
+def get_requirements_endpoint(
+    conversation_id: int,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    try:
+        return get_requirements(
+            conversation_id=conversation_id,
+            db=db
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+
+
+@app.patch(
+    "/requirements/{requirement_id}",
+    response_model=RequirementResponse
+)
+def update_requirement_endpoint(
+    requirement_id: int,
+    requirement_data: RequirementUpdate,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    try:
+        return update_requirement(
+            requirement_id=requirement_id,
+            value=requirement_data.value,
+            db=db
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+
+
+@app.delete(
+    "/requirements/{requirement_id}"
+)
+def delete_requirement_endpoint(
+    requirement_id: int,
+    db: Session = Depends(get_db)  # noqa: B008
+):
+    try:
+        delete_requirement(
+            requirement_id=requirement_id,
+            db=db
+        )
+        return {"message": "requirement deleted successfully"}
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error))
