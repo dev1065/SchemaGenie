@@ -1,4 +1,5 @@
 import ollama
+from schemas import AIAnalysisResponse
 
 MODEL_NAME = "qwen3.5:0.8b"
 
@@ -52,4 +53,27 @@ def generate_response(messages: list[dict[str, str]]) -> str:
     if not content:
         raise RuntimeError("LLM returned an empty response")
 
-    return response["message"]["content"]
+    return content
+
+
+def analyze_conversation(
+    messages: list[dict[str, str]]
+) -> AIAnalysisResponse:
+
+    analysis_messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT
+        },
+        *messages
+    ]
+    response = ollama.chat(
+        model=MODEL_NAME,
+        messages=analysis_messages,
+        format=AIAnalysisResponse.model_json_schema()
+    )
+    content = response["message"]["content"].strip()
+
+    if not content:
+        raise RuntimeError("LLM returned an empty analysis")
+    return AIAnalysisResponse.model_validate_json(content)

@@ -72,3 +72,12 @@ class RequirementResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class AIRequirement(BaseModel):
+    key: str
+    value: str
+
+
+class AIAnalysisResponse(BaseModel):
+    requirements: list[AIRequirement]
+    next_question: str
