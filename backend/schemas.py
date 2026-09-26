@@ -15,9 +15,7 @@ class ProjectResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class ProjectUpdate(BaseModel):
@@ -31,9 +29,7 @@ class ConversationResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class MessageCreate(BaseModel):
@@ -47,9 +43,7 @@ class MessageResponse(BaseModel):
     content: str
     created_at: datetime
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class RequirementCreate(BaseModel):
@@ -69,9 +63,8 @@ class RequirementResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
+
 
 class AIRequirement(BaseModel):
     key: str
@@ -81,3 +74,14 @@ class AIRequirement(BaseModel):
 class AIAnalysisResponse(BaseModel):
     requirements: list[AIRequirement]
     next_question: str
+
+
+class RequirementChange(BaseModel):
+    action: str
+    requirement_id: int | None = None
+    key: str
+    value: str
+
+
+class RequirementReconciliationResponse(BaseModel):
+    changes: list[RequirementChange]
