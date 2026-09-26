@@ -1,4 +1,5 @@
 from ai.ollama_client import analyze_conversation
+from ai.requirement_reconciler import reconcile_requirements
 from models import Conversation, Message, Requirement
 from sqlalchemy.orm import Session
 
@@ -32,24 +33,51 @@ def generate_conversation_response(
     ]
 
     analysis = analyze_conversation(conversation_messages)
-    for extracted_requirement in analysis.requirements:
-        requirement = (
-            db.query(Requirement)
-            .filter(
-                Requirement.conversation_id == conversation_id,
-                Requirement.key == extracted_requirement.key,
-            )
-            .first()
-        )
-        if requirement is None:
+    existing_requirements = (
+        db.query(Requirement)
+        .filter(Requirement.conversation_id == conversation_id)
+        .order_by(Requirement.created_at)
+        .all()
+    )
+    existing_requirement_data = [
+        {"id": requirement.id, "key": requirement.key, "value": requirement.value}
+        for requirement in existing_requirements
+    ]
+    new_requirement_data = [
+        {
+            "key": requirement.key,
+            "value": requirement.value,
+        }
+        for requirement in analysis.requirements
+    ]
+    reconciliation = reconcile_requirements(
+        existing_requirement_data, new_requirement_data
+    )
+    for change in reconciliation.changes:
+        if change.action == "create":
             requirement = Requirement(
                 conversation_id=conversation_id,
-                key=extracted_requirement.key,
-                value=extracted_requirement.value,
+                key=change.key,
+                value=change.value,
             )
             db.add(requirement)
-        else:
-            requirement.value = extracted_requirement.value
+
+        elif change.action == "update":
+            requirement = (
+                db.query(Requirement)
+                .filter(
+                    Requirement.id == change.requirement_id,
+                    Requirement.conversation_id == conversation_id,
+                )
+                .first()
+            )
+
+            if requirement is None:
+                raise ValueError("Requirement to update was not found")
+
+            requirement.value = change.value
+        elif change.action == "ignore":
+            continue
 
     db.commit()
     ai_message = Message(
